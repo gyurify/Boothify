@@ -1,0 +1,46 @@
+:root {
+  color-scheme: light;
+  --paper: #fcf7ef;
+  --paper-shadow: #f4e7cf;
+  --ink: #1e1b18;
+  --teal: #70d7c7;
+  --pink: #ff9bc2;
+  --gold: #ffd761;
+  --sky: #8fc5ff;
+  --coral: #ff926d;
+  --white: #fffaf5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  font-family: Inter, "Segoe UI", Arial, sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(255, 214, 97, 0.45), transparent 24%),
+    radial-gradient(circle at top right, rgba(112, 215, 199, 0.3), transparent 20%),
+    linear-gradient(180deg, #fff9f2 0%, var(--paper) 100%);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
