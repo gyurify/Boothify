@@ -1,4 +1,5 @@
 import { useBoothify } from '../context/BoothifyContext.jsx';
+import SketchCard from './ui/SketchCard.jsx';
 
 export default function StripLayoutGallery() {
   const { availableLayouts, selectLayout, session } = useBoothify();
@@ -9,13 +10,15 @@ export default function StripLayoutGallery() {
         const isActive = layout.id === session.selectedLayoutId;
 
         return (
-          <button
+          <SketchCard
+            as="button"
             key={layout.id}
-            type="button"
             className={`layout-card tilt-card ${isActive ? 'is-active' : ''}`}
+            interactive
             onClick={() => selectLayout(layout.id)}
             aria-pressed={isActive}
-            style={{ '--tilt': `${index % 2 === 0 ? -1.2 : 1.2}deg` }}
+            tilt={index % 2 === 0 ? -1.2 : 1.2}
+            type="button"
           >
             <div className="layout-card__header">
               <strong>{layout.label}</strong>
@@ -38,7 +41,7 @@ export default function StripLayoutGallery() {
               <span>{layout.stripSizeLabel}</span>
               <span>{layout.photoSizeLabel}</span>
             </div>
-          </button>
+          </SketchCard>
         );
       })}
     </div>

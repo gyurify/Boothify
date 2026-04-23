@@ -1,10 +1,13 @@
 import { useBoothify } from '../context/BoothifyContext.jsx';
+import ProgressMeter from './ui/ProgressMeter.jsx';
+import SketchCard from './ui/SketchCard.jsx';
 
 export default function SessionSnapshot() {
-  const { progress, selectedLayout, selectedStripShots, selectedTrack, session } = useBoothify();
+  const { appLimits, progress, selectedLayout, selectedStripShots, selectedTrack, session } =
+    useBoothify();
 
   return (
-    <aside className="page-card session-snapshot">
+    <SketchCard as="aside" className="session-snapshot" tone="mint">
       <p className="eyebrow">Session state</p>
       <div className="snapshot-grid">
         <div>
@@ -36,7 +39,23 @@ export default function SessionSnapshot() {
           <strong>{progress.hasGeneratedPreview ? 'Ready' : 'Pending'}</strong>
         </div>
       </div>
-    </aside>
+
+      <div className="snapshot-progress-stack">
+        <ProgressMeter
+          hint="Up to ten captures per session."
+          label="Shot count"
+          max={appLimits.maxShots}
+          tone="gold"
+          value={session.capturedShots.length}
+        />
+        <ProgressMeter
+          hint={`Fill all ${selectedLayout.photoCount} slots for export.`}
+          label="Strip fill"
+          max={selectedLayout.photoCount}
+          tone="pink"
+          value={selectedStripShots.length}
+        />
+      </div>
+    </SketchCard>
   );
 }
-

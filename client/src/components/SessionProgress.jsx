@@ -12,7 +12,7 @@ export default function SessionProgress() {
             <span className="workflow-index">{String(index + 1).padStart(2, '0')}</span>
             <span className="workflow-copy">
               <strong>{step.label}</strong>
-              <small>{step.complete ? 'Ready' : 'Pending'}</small>
+              <small>{step.complete ? 'Ready' : step.unlocked ? 'Open' : 'Locked'}</small>
             </span>
           </>
         );
@@ -41,4 +41,3 @@ export default function SessionProgress() {
     </nav>
   );
 }
-

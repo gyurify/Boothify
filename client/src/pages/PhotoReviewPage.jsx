@@ -1,6 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import PageIntro from '../components/PageIntro.jsx';
 import SessionSnapshot from '../components/SessionSnapshot.jsx';
+import ProgressMeter from '../components/ui/ProgressMeter.jsx';
+import SketchButton from '../components/ui/SketchButton.jsx';
+import SketchCard from '../components/ui/SketchCard.jsx';
 import { APP_ROUTES } from '../context/boothifyConfig.js';
 import { useBoothify } from '../context/BoothifyContext.jsx';
 
@@ -19,11 +22,11 @@ export default function PhotoReviewPage() {
   return (
     <div className="page-stack">
       <section className="page-grid page-grid--two">
-        <div className="page-card">
+        <SketchCard className="page-card" tone="blush">
           <PageIntro
             eyebrow="Step 4"
             title="Photo review and strip composer"
-            description="This page owns the exact strip composition. Users can choose which captured photos fill the selected layout."
+            description="Choose the exact frames that deserve a spot in the finished strip."
           />
 
           <p className="helper-text">
@@ -31,25 +34,35 @@ export default function PhotoReviewPage() {
             for the {selectedLayout.label}.
           </p>
 
+          <ProgressMeter
+            hint="Tap cards to add or remove them from the final strip."
+            label="Composer fill"
+            max={selectedLayout.photoCount}
+            tone="pink"
+            value={selectedStripShots.length}
+          />
+
           <div className="shot-grid">
             {session.capturedShots.map((shot) => {
               const isSelected = session.selectedStripPhotoIds.includes(shot.id);
               const disableAdd = !isSelected && selectionIsFull;
 
               return (
-                <button
+                <SketchCard
+                  as="button"
                   key={shot.id}
                   className={`shot-card shot-card--selectable ${isSelected ? 'is-selected' : ''}`.trim()}
                   disabled={disableAdd}
-                  type="button"
+                  interactive
                   onClick={() => toggleStripPhoto(shot.id)}
+                  type="button"
                 >
                   <div className="shot-preview" style={{ backgroundColor: shot.tone }} />
                   <div className="shot-meta">
                     <strong>{shot.label}</strong>
                     <span>{isSelected ? 'In strip' : 'Tap to use'}</span>
                   </div>
-                </button>
+                </SketchCard>
               );
             })}
           </div>
@@ -59,7 +72,7 @@ export default function PhotoReviewPage() {
               const shot = selectedStripShots[index];
 
               return (
-                <div key={`slot-${index + 1}`} className="slot-card">
+                <SketchCard key={`slot-${index + 1}`} className="slot-card" tone="paper">
                   {shot ? (
                     <>
                       <div className="shot-preview" style={{ backgroundColor: shot.tone }} />
@@ -71,40 +84,39 @@ export default function PhotoReviewPage() {
                       <strong>Slot {index + 1}</strong>
                     </>
                   )}
-                </div>
+                </SketchCard>
               );
             })}
           </div>
 
           <div className="action-row action-row--compact">
-            <button
-              className="secondary-button"
+            <SketchButton
               disabled={selectedStripShots.length === 0}
               type="button"
+              variant="ghost"
               onClick={clearStripSelection}
             >
               Clear selection
-            </button>
+            </SketchButton>
           </div>
-        </div>
+        </SketchCard>
 
         <SessionSnapshot />
       </section>
 
       <div className="action-row">
-        <button className="secondary-button" type="button" onClick={() => navigate(APP_ROUTES.camera)}>
+        <SketchButton onClick={() => navigate(APP_ROUTES.camera)} type="button" variant="ghost">
           Back
-        </button>
-        <button
-          className="primary-button"
+        </SketchButton>
+        <SketchButton
           disabled={!selectionIsFull}
           type="button"
+          variant="primary"
           onClick={() => navigate(APP_ROUTES.generation)}
         >
           Continue to generation
-        </button>
+        </SketchButton>
       </div>
     </div>
   );
 }
-

@@ -1,6 +1,9 @@
 import { useNavigate } from 'react-router-dom';
 import PageIntro from '../components/PageIntro.jsx';
 import SessionSnapshot from '../components/SessionSnapshot.jsx';
+import ProgressMeter from '../components/ui/ProgressMeter.jsx';
+import SketchButton from '../components/ui/SketchButton.jsx';
+import SketchCard from '../components/ui/SketchCard.jsx';
 import { APP_ROUTES } from '../context/boothifyConfig.js';
 import { useBoothify } from '../context/BoothifyContext.jsx';
 
@@ -12,11 +15,11 @@ export default function GenerationPage() {
   return (
     <div className="page-stack">
       <section className="page-grid page-grid--two">
-        <div className="page-card">
+        <SketchCard className="page-card" tone="mint">
           <PageIntro
             eyebrow="Step 5"
             title="Generation screen"
-            description="This route owns render status, preview metadata, and the handoff to download delivery. Actual media generation lands in a later step."
+            description="Bundle the strip with motion, timing, and soundtrack into one preview-ready session."
           />
 
           <div className="summary-grid">
@@ -36,42 +39,49 @@ export default function GenerationPage() {
             </div>
           </div>
 
+          <ProgressMeter
+            hint="This becomes the real render state once the media pipeline is wired."
+            label="Preview status"
+            max={1}
+            tone="sky"
+            value={generation.status === 'ready' ? 1 : 0}
+          />
+
           <div className="action-row action-row--compact">
-            <button className="primary-button" type="button" onClick={generatePreviewPlaceholder}>
+            <SketchButton onClick={generatePreviewPlaceholder} type="button" variant="primary">
               Generate placeholder preview
-            </button>
+            </SketchButton>
           </div>
 
           {generation.previewAsset ? (
-            <div className="preview-panel">
+            <SketchCard className="preview-panel" tone="paper">
               <strong>{generation.previewAsset.label}</strong>
               <p>{generation.previewAsset.soundtrackLabel}</p>
               <p>{generation.previewAsset.note}</p>
-            </div>
+            </SketchCard>
           ) : (
             <p className="helper-text">
-              No preview exists yet. This screen is now responsible for generation state.
+              Generate a preview to see how this session wants to come together.
             </p>
           )}
-        </div>
+        </SketchCard>
 
         <SessionSnapshot />
       </section>
 
       <div className="action-row">
-        <button className="secondary-button" type="button" onClick={() => navigate(APP_ROUTES.review)}>
+        <SketchButton onClick={() => navigate(APP_ROUTES.review)} type="button" variant="ghost">
           Back
-        </button>
-        <button
-          className="primary-button"
+        </SketchButton>
+        <SketchButton
           disabled={generation.status !== 'ready'}
           type="button"
+          variant="primary"
           onClick={() => navigate(APP_ROUTES.download)}
         >
           Continue to downloads
-        </button>
+        </SketchButton>
       </div>
     </div>
   );
 }
-

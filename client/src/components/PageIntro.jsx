@@ -7,4 +7,3 @@ export default function PageIntro({ eyebrow, title, description }) {
     </div>
   );
 }
-

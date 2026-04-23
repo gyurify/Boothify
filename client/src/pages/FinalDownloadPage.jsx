@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import PageIntro from '../components/PageIntro.jsx';
 import SessionSnapshot from '../components/SessionSnapshot.jsx';
+import SketchButton from '../components/ui/SketchButton.jsx';
+import SketchCard from '../components/ui/SketchCard.jsx';
 import { APP_ROUTES } from '../context/boothifyConfig.js';
 import { useBoothify } from '../context/BoothifyContext.jsx';
 
@@ -13,11 +15,11 @@ export default function FinalDownloadPage() {
   return (
     <div className="page-stack">
       <section className="page-grid page-grid--two">
-        <div className="page-card">
+        <SketchCard className="page-card" tone="gold">
           <PageIntro
             eyebrow="Step 6"
             title="Final download screen"
-            description="This route is the final delivery layer. The export actions are placeholders for now, but the screen and state contract are ready."
+            description="Choose how you want to take the session home: motion, strip-only, or the full bundle."
           />
 
           <div className="download-grid">
@@ -25,36 +27,30 @@ export default function FinalDownloadPage() {
               const asset = generation.downloads[key];
 
               return (
-                <article key={key} className="download-card">
+                <SketchCard as="article" key={key} className="download-card" tone="paper">
                   <strong>{asset?.label || 'Pending asset'}</strong>
                   <p>{asset?.filename || 'Generated filename will appear here.'}</p>
-                  <button className="secondary-button" disabled type="button">
+                  <SketchButton disabled type="button" variant="ghost">
                     Download wiring later
-                  </button>
-                </article>
+                  </SketchButton>
+                </SketchCard>
               );
             })}
           </div>
 
           <p className="helper-text">
-            This step intentionally stops at delivery architecture: three download choices and a
-            stable destination for future export handlers.
+            Everything is lined up for the final handoff once export wiring is added.
           </p>
-        </div>
+        </SketchCard>
 
         <SessionSnapshot />
       </section>
 
       <div className="action-row">
-        <button
-          className="secondary-button"
-          type="button"
-          onClick={() => navigate(APP_ROUTES.generation)}
-        >
+        <SketchButton onClick={() => navigate(APP_ROUTES.generation)} type="button" variant="ghost">
           Back
-        </button>
+        </SketchButton>
       </div>
     </div>
   );
 }
-
