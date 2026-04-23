@@ -1,6 +1,11 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useBoothify } from '../context/BoothifyContext.jsx';
+import SessionProgress from './SessionProgress.jsx';
 
 export default function AppShell({ children }) {
+  const navigate = useNavigate();
+  const { resetSession } = useBoothify();
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -13,17 +18,29 @@ export default function AppShell({ children }) {
         </Link>
 
         <div className="topbar-note">
-          <span className="pill">React + Vite</span>
-          <span className="pill">Express API</span>
+          <span className="pill">Session flow</span>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() => {
+              resetSession();
+              navigate('/');
+            }}
+          >
+            Reset
+          </button>
         </div>
       </header>
+
+      <div className="page-frame">
+        <SessionProgress />
+      </div>
 
       <main className="page-frame">{children}</main>
 
       <footer className="site-footer">
-        <p>Base scaffold ready for capture, Spotify, strip builder, and export flows.</p>
+        <p>Step 2 focuses on routing, session architecture, and screen ownership.</p>
       </footer>
     </div>
   );
 }
-

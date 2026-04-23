@@ -1,12 +1,12 @@
 import { useBoothify } from '../context/BoothifyContext.jsx';
 
 export default function StripLayoutGallery() {
-  const { availableLayouts, selectedLayoutId, selectLayout } = useBoothify();
+  const { availableLayouts, selectLayout, session } = useBoothify();
 
   return (
     <div className="layout-grid">
       {availableLayouts.map((layout, index) => {
-        const isActive = layout.id === selectedLayoutId;
+        const isActive = layout.id === session.selectedLayoutId;
 
         return (
           <button
@@ -44,4 +44,3 @@ export default function StripLayoutGallery() {
     </div>
   );
 }
-
