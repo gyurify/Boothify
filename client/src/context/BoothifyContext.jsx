@@ -1,8 +1,9 @@
-import { createContext, useContext, useMemo, useReducer } from 'react';
+import { createContext, useCallback, useContext, useMemo, useReducer } from 'react';
+import { fetchSpotifyClientConfig, searchSpotifyTracks as requestSpotifyTracks } from '../services/spotifyApi.js';
 import {
   APP_LIMITS,
   APP_ROUTES,
-  SAMPLE_SPOTIFY_TRACKS,
+  DEFAULT_SPOTIFY_RESULTS_LIMIT,
   STRIP_LAYOUTS,
   WORKFLOW_STEPS,
   getStripLayoutById
@@ -25,16 +26,37 @@ function createInitialGenerationState() {
   };
 }
 
+function createInitialSpotifyState() {
+  return {
+    auth: {
+      checked: false,
+      hasClientCredentials: false,
+      market: 'US',
+      mode: 'mock',
+      note: 'Spotify configuration has not been loaded yet.',
+      redirectUri: '',
+      useMockData: true
+    },
+    error: null,
+    hasSearched: false,
+    items: [],
+    note: 'Search for a track title or artist to load Spotify results.',
+    query: '',
+    source: 'mock',
+    status: 'idle'
+  };
+}
+
 function createInitialSessionState() {
   return {
-    sessionId: `boothify-${Date.now()}`,
-    spotifyQuery: '',
-    selectedTrackId: null,
-    clipLengthSeconds: APP_LIMITS.defaultClipSeconds,
-    selectedLayoutId: STRIP_LAYOUTS[0].id,
     capturedShots: [],
+    clipLengthSeconds: APP_LIMITS.defaultClipSeconds,
+    generation: createInitialGenerationState(),
+    selectedLayoutId: STRIP_LAYOUTS[0].id,
     selectedStripPhotoIds: [],
-    generation: createInitialGenerationState()
+    selectedTrack: null,
+    sessionId: `boothify-${Date.now()}`,
+    spotify: createInitialSpotifyState()
   };
 }
 
@@ -45,8 +67,13 @@ function resetGeneration(state) {
   };
 }
 
-function findTrackById(trackId) {
-  return SAMPLE_SPOTIFY_TRACKS.find((track) => track.id === trackId) || null;
+function createSearchErrorMessage(error) {
+  return (
+    error?.response?.data?.message ||
+    error?.response?.data?.error ||
+    error?.message ||
+    'Unable to search Spotify tracks right now.'
+  );
 }
 
 function boothifyReducer(state, action) {
@@ -54,13 +81,105 @@ function boothifyReducer(state, action) {
     case 'SET_SPOTIFY_QUERY':
       return {
         ...state,
-        spotifyQuery: action.payload
+        spotify: {
+          ...state.spotify,
+          query: action.payload
+        }
+      };
+
+    case 'SPOTIFY_CONFIG_LOADED':
+      return {
+        ...state,
+        spotify: {
+          ...state.spotify,
+          auth: {
+            ...state.spotify.auth,
+            ...action.payload
+          },
+          note: action.payload.note || state.spotify.note
+        }
+      };
+
+    case 'SPOTIFY_CONFIG_FAILED':
+      return {
+        ...state,
+        spotify: {
+          ...state.spotify,
+          auth: {
+            ...state.spotify.auth,
+            checked: true,
+            mode: 'mock',
+            useMockData: true
+          },
+          note: action.payload
+        }
+      };
+
+    case 'CLEAR_SPOTIFY_RESULTS':
+      return {
+        ...state,
+        spotify: {
+          ...state.spotify,
+          error: null,
+          hasSearched: false,
+          items: [],
+          note: 'Search for a track title or artist to load Spotify results.',
+          source: state.spotify.auth.useMockData ? 'mock' : 'spotify-api',
+          status: 'idle'
+        }
+      };
+
+    case 'SPOTIFY_SEARCH_STARTED':
+      return {
+        ...state,
+        spotify: {
+          ...state.spotify,
+          error: null,
+          status: 'loading'
+        }
+      };
+
+    case 'SPOTIFY_SEARCH_SUCCEEDED': {
+      const refreshedSelectedTrack = state.selectedTrack
+        ? action.payload.items.find((track) => track.id === state.selectedTrack.id) || state.selectedTrack
+        : null;
+
+      return {
+        ...state,
+        selectedTrack: refreshedSelectedTrack,
+        spotify: {
+          ...state.spotify,
+          auth: {
+            ...state.spotify.auth,
+            ...(action.payload.auth || {})
+          },
+          error: null,
+          hasSearched: true,
+          items: action.payload.items,
+          note: action.payload.note || state.spotify.note,
+          source: action.payload.source || state.spotify.source,
+          status: 'ready'
+        }
+      };
+    }
+
+    case 'SPOTIFY_SEARCH_FAILED':
+      return {
+        ...state,
+        spotify: {
+          ...state.spotify,
+          error: action.payload,
+          hasSearched: true,
+          items: [],
+          note: action.payload,
+          status: 'error'
+        }
       };
 
     case 'SELECT_TRACK':
       return resetGeneration({
         ...state,
-        selectedTrackId: action.payload
+        selectedTrack: action.payload
       });
 
     case 'SET_CLIP_LENGTH':
@@ -90,10 +209,10 @@ function boothifyReducer(state, action) {
       const shotIndex = state.capturedShots.length;
       const nextShotNumber = shotIndex + 1;
       const nextShot = {
+        capturedAt: new Date().toISOString(),
         id: `shot-${Date.now()}-${nextShotNumber}`,
         label: `Shot ${String(nextShotNumber).padStart(2, '0')}`,
-        tone: SHOT_SWATCHES[shotIndex % SHOT_SWATCHES.length],
-        capturedAt: new Date().toISOString()
+        tone: SHOT_SWATCHES[shotIndex % SHOT_SWATCHES.length]
       };
 
       return resetGeneration({
@@ -163,7 +282,6 @@ function boothifyReducer(state, action) {
         return state;
       }
 
-      const selectedTrack = findTrackById(state.selectedTrackId);
       const assetStem = `${selectedLayout.id}-${Date.now()}`;
 
       return {
@@ -172,37 +290,46 @@ function boothifyReducer(state, action) {
           status: 'ready',
           previewType: 'gif',
           previewAsset: {
+            clipLengthSeconds: state.clipLengthSeconds,
             id: `preview-${assetStem}`,
             label: `${selectedLayout.label} preview`,
-            soundtrackLabel: selectedTrack
-              ? `${selectedTrack.title} - ${selectedTrack.artist}`
-              : 'No soundtrack selected',
-            clipLengthSeconds: state.clipLengthSeconds,
-            shotCount: state.selectedStripPhotoIds.length,
-            note: selectedTrack?.previewUrl
+            note: state.selectedTrack?.previewUrl
               ? 'Preview-safe Spotify audio is available for this selection.'
-              : 'No Spotify preview clip is available, so export audio will need a fallback source.'
+              : 'No Spotify preview clip is available, so export audio will need a fallback source.',
+            shotCount: state.selectedStripPhotoIds.length,
+            soundtrackLabel: state.selectedTrack
+              ? `${state.selectedTrack.title} - ${state.selectedTrack.artist}`
+              : 'No soundtrack selected'
           },
           downloads: {
+            bundle: {
+              filename: `${assetStem}-bundle.zip`,
+              label: 'Both assets'
+            },
             motion: {
-              label: 'GIF / video with song',
-              filename: `${assetStem}-motion.mp4`
+              filename: `${assetStem}-motion.mp4`,
+              label: 'GIF / video with song'
             },
             strip: {
-              label: 'Photo strip only',
-              filename: `${assetStem}-strip.png`
-            },
-            bundle: {
-              label: 'Both assets',
-              filename: `${assetStem}-bundle.zip`
+              filename: `${assetStem}-strip.png`,
+              label: 'Photo strip only'
             }
           }
         }
       };
     }
 
-    case 'RESET_SESSION':
-      return createInitialSessionState();
+    case 'RESET_SESSION': {
+      const nextState = createInitialSessionState();
+
+      return {
+        ...nextState,
+        spotify: {
+          ...nextState.spotify,
+          auth: state.spotify.auth
+        }
+      };
+    }
 
     default:
       return state;
@@ -212,117 +339,199 @@ function boothifyReducer(state, action) {
 export function BoothifyProvider({ children }) {
   const [session, dispatch] = useReducer(boothifyReducer, undefined, createInitialSessionState);
 
-  const value = useMemo(
-    () => {
-      const selectedTrack = findTrackById(session.selectedTrackId);
-      const selectedLayout = getStripLayoutById(session.selectedLayoutId);
-      const normalizedQuery = session.spotifyQuery.trim().toLowerCase();
-      const filteredTracks = normalizedQuery
-        ? SAMPLE_SPOTIFY_TRACKS.filter((track) =>
-            `${track.title} ${track.artist}`.toLowerCase().includes(normalizedQuery)
-          )
-        : SAMPLE_SPOTIFY_TRACKS;
-      const selectedStripShots = session.selectedStripPhotoIds
-        .map((shotId) => session.capturedShots.find((shot) => shot.id === shotId))
-        .filter(Boolean);
+  const setSpotifyQuery = useCallback((query) => {
+    dispatch({ type: 'SET_SPOTIFY_QUERY', payload: query });
+  }, []);
 
-      const progress = {
-        hasSelectedTrack: Boolean(selectedTrack),
-        hasEnoughShotsForLayout: session.capturedShots.length >= selectedLayout.photoCount,
-        hasExactStripSelection: session.selectedStripPhotoIds.length === selectedLayout.photoCount,
-        hasGeneratedPreview: session.generation.status === 'ready'
+  const loadSpotifyConfiguration = useCallback(async () => {
+    try {
+      const config = await fetchSpotifyClientConfig();
+      dispatch({ type: 'SPOTIFY_CONFIG_LOADED', payload: config });
+      return config;
+    } catch (error) {
+      const message = createSearchErrorMessage(error);
+      dispatch({ type: 'SPOTIFY_CONFIG_FAILED', payload: message });
+      return null;
+    }
+  }, []);
+
+  const searchSpotifyTracks = useCallback(async (query, { limit = DEFAULT_SPOTIFY_RESULTS_LIMIT } = {}) => {
+    const normalizedQuery = String(query || '').trim();
+
+    if (!normalizedQuery) {
+      dispatch({ type: 'CLEAR_SPOTIFY_RESULTS' });
+      return null;
+    }
+
+    dispatch({ type: 'SPOTIFY_SEARCH_STARTED' });
+
+    try {
+      const result = await requestSpotifyTracks(normalizedQuery, { limit });
+      dispatch({ type: 'SPOTIFY_SEARCH_SUCCEEDED', payload: result });
+      return result;
+    } catch (error) {
+      const message = createSearchErrorMessage(error);
+      dispatch({ type: 'SPOTIFY_SEARCH_FAILED', payload: message });
+      return null;
+    }
+  }, []);
+
+  const selectTrack = useCallback((track) => {
+    dispatch({ type: 'SELECT_TRACK', payload: track });
+  }, []);
+
+  const setSongClipLength = useCallback((seconds) => {
+    dispatch({ type: 'SET_CLIP_LENGTH', payload: Number(seconds) });
+  }, []);
+
+  const selectLayout = useCallback((layoutId) => {
+    dispatch({ type: 'SELECT_LAYOUT', payload: layoutId });
+  }, []);
+
+  const addMockShot = useCallback(() => {
+    dispatch({ type: 'ADD_MOCK_SHOT' });
+  }, []);
+
+  const removeCapturedShot = useCallback((shotId) => {
+    dispatch({ type: 'REMOVE_CAPTURED_SHOT', payload: shotId });
+  }, []);
+
+  const clearCapturedShots = useCallback(() => {
+    dispatch({ type: 'CLEAR_CAPTURED_SHOTS' });
+  }, []);
+
+  const toggleStripPhoto = useCallback((shotId) => {
+    dispatch({ type: 'TOGGLE_STRIP_PHOTO', payload: shotId });
+  }, []);
+
+  const clearStripSelection = useCallback(() => {
+    dispatch({ type: 'CLEAR_STRIP_SELECTION' });
+  }, []);
+
+  const generatePreviewPlaceholder = useCallback(() => {
+    dispatch({ type: 'GENERATE_PREVIEW_PLACEHOLDER' });
+  }, []);
+
+  const resetSession = useCallback(() => {
+    dispatch({ type: 'RESET_SESSION' });
+  }, []);
+
+  const value = useMemo(() => {
+    const selectedTrack = session.selectedTrack;
+    const selectedLayout = getStripLayoutById(session.selectedLayoutId);
+    const selectedStripShots = session.selectedStripPhotoIds
+      .map((shotId) => session.capturedShots.find((shot) => shot.id === shotId))
+      .filter(Boolean);
+
+    const progress = {
+      hasEnoughShotsForLayout: session.capturedShots.length >= selectedLayout.photoCount,
+      hasExactStripSelection: session.selectedStripPhotoIds.length === selectedLayout.photoCount,
+      hasGeneratedPreview: session.generation.status === 'ready',
+      hasSelectedTrack: Boolean(selectedTrack)
+    };
+
+    const routeAccess = {
+      landing: {
+        allowed: true,
+        fallbackPath: APP_ROUTES.landing
+      },
+      spotify: {
+        allowed: true,
+        fallbackPath: APP_ROUTES.landing
+      },
+      stripSelection: {
+        allowed: progress.hasSelectedTrack,
+        fallbackPath: APP_ROUTES.spotify
+      },
+      camera: {
+        allowed: progress.hasSelectedTrack,
+        fallbackPath: progress.hasSelectedTrack ? APP_ROUTES.stripSelection : APP_ROUTES.spotify
+      },
+      review: {
+        allowed: session.capturedShots.length > 0,
+        fallbackPath: APP_ROUTES.camera
+      },
+      generation: {
+        allowed: progress.hasExactStripSelection,
+        fallbackPath: APP_ROUTES.review
+      },
+      download: {
+        allowed: progress.hasGeneratedPreview,
+        fallbackPath: APP_ROUTES.generation
+      }
+    };
+
+    const workflow = WORKFLOW_STEPS.map((step) => {
+      const completenessMap = {
+        camera: progress.hasEnoughShotsForLayout,
+        download: progress.hasGeneratedPreview,
+        generation: progress.hasGeneratedPreview,
+        landing: true,
+        review: progress.hasExactStripSelection,
+        spotify: progress.hasSelectedTrack,
+        stripSelection: Boolean(selectedLayout)
       };
 
-      const routeAccess = {
-        landing: {
-          allowed: true,
-          fallbackPath: APP_ROUTES.landing
-        },
-        spotify: {
-          allowed: true,
-          fallbackPath: APP_ROUTES.landing
-        },
-        stripSelection: {
-          allowed: progress.hasSelectedTrack,
-          fallbackPath: APP_ROUTES.spotify
-        },
-        camera: {
-          allowed: progress.hasSelectedTrack,
-          fallbackPath: progress.hasSelectedTrack
-            ? APP_ROUTES.stripSelection
-            : APP_ROUTES.spotify
-        },
-        review: {
-          allowed: session.capturedShots.length > 0,
-          fallbackPath: APP_ROUTES.camera
-        },
-        generation: {
-          allowed: progress.hasExactStripSelection,
-          fallbackPath: APP_ROUTES.review
-        },
-        download: {
-          allowed: progress.hasGeneratedPreview,
-          fallbackPath: APP_ROUTES.generation
-        }
+      const unlockedMap = {
+        camera: routeAccess.camera.allowed,
+        download: routeAccess.download.allowed,
+        generation: routeAccess.generation.allowed,
+        landing: true,
+        review: routeAccess.review.allowed,
+        spotify: true,
+        stripSelection: routeAccess.stripSelection.allowed
       };
-
-      const workflow = WORKFLOW_STEPS.map((step) => {
-        const completenessMap = {
-          landing: true,
-          spotify: progress.hasSelectedTrack,
-          stripSelection: Boolean(selectedLayout),
-          camera: progress.hasEnoughShotsForLayout,
-          review: progress.hasExactStripSelection,
-          generation: progress.hasGeneratedPreview,
-          download: progress.hasGeneratedPreview
-        };
-
-        const unlockedMap = {
-          landing: true,
-          spotify: true,
-          stripSelection: routeAccess.stripSelection.allowed,
-          camera: routeAccess.camera.allowed,
-          review: routeAccess.review.allowed,
-          generation: routeAccess.generation.allowed,
-          download: routeAccess.download.allowed
-        };
-
-        return {
-          ...step,
-          complete: completenessMap[step.id],
-          unlocked: unlockedMap[step.id]
-        };
-      });
 
       return {
-        appLimits: APP_LIMITS,
-        availableLayouts: STRIP_LAYOUTS,
-        availableTracks: filteredTracks,
-        workflow,
-        routeAccess,
-        progress,
-        session,
-        generation: session.generation,
-        selectedTrack,
-        selectedLayout,
-        selectedStripShots,
-        setSpotifyQuery: (query) => dispatch({ type: 'SET_SPOTIFY_QUERY', payload: query }),
-        selectTrack: (trackId) => dispatch({ type: 'SELECT_TRACK', payload: trackId }),
-        setSongClipLength: (seconds) =>
-          dispatch({ type: 'SET_CLIP_LENGTH', payload: Number(seconds) }),
-        selectLayout: (layoutId) => dispatch({ type: 'SELECT_LAYOUT', payload: layoutId }),
-        addMockShot: () => dispatch({ type: 'ADD_MOCK_SHOT' }),
-        removeCapturedShot: (shotId) =>
-          dispatch({ type: 'REMOVE_CAPTURED_SHOT', payload: shotId }),
-        clearCapturedShots: () => dispatch({ type: 'CLEAR_CAPTURED_SHOTS' }),
-        toggleStripPhoto: (shotId) => dispatch({ type: 'TOGGLE_STRIP_PHOTO', payload: shotId }),
-        clearStripSelection: () => dispatch({ type: 'CLEAR_STRIP_SELECTION' }),
-        generatePreviewPlaceholder: () => dispatch({ type: 'GENERATE_PREVIEW_PLACEHOLDER' }),
-        resetSession: () => dispatch({ type: 'RESET_SESSION' })
+        ...step,
+        complete: completenessMap[step.id],
+        unlocked: unlockedMap[step.id]
       };
-    },
-    [session]
-  );
+    });
+
+    return {
+      addMockShot,
+      appLimits: APP_LIMITS,
+      availableLayouts: STRIP_LAYOUTS,
+      availableTracks: session.spotify.items,
+      clearCapturedShots,
+      clearStripSelection,
+      generatePreviewPlaceholder,
+      generation: session.generation,
+      loadSpotifyConfiguration,
+      progress,
+      removeCapturedShot,
+      resetSession,
+      routeAccess,
+      searchSpotifyTracks,
+      selectLayout,
+      selectedLayout,
+      selectedStripShots,
+      selectedTrack,
+      selectTrack,
+      session,
+      setSongClipLength,
+      setSpotifyQuery,
+      spotify: session.spotify,
+      toggleStripPhoto,
+      workflow
+    };
+  }, [
+    addMockShot,
+    clearCapturedShots,
+    clearStripSelection,
+    generatePreviewPlaceholder,
+    loadSpotifyConfiguration,
+    removeCapturedShot,
+    resetSession,
+    searchSpotifyTracks,
+    selectLayout,
+    selectTrack,
+    session,
+    setSongClipLength,
+    setSpotifyQuery,
+    toggleStripPhoto
+  ]);
 
   return <BoothifyContext.Provider value={value}>{children}</BoothifyContext.Provider>;
 }

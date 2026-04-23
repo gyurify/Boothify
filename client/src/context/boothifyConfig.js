@@ -15,6 +15,8 @@ export const APP_LIMITS = {
   maxShots: 10
 };
 
+export const DEFAULT_SPOTIFY_RESULTS_LIMIT = 8;
+
 export const WORKFLOW_STEPS = [
   {
     id: 'landing',
@@ -160,38 +162,6 @@ export const STRIP_LAYOUTS = [
   }
 ];
 
-export const SAMPLE_SPOTIFY_TRACKS = [
-  {
-    id: 'track-midnight',
-    title: 'Midnight Polaroid',
-    artist: 'The Afterglow Club',
-    durationLabel: '3:18',
-    previewUrl: 'https://p.scdn.co/mp3-preview/example-midnight'
-  },
-  {
-    id: 'track-neon',
-    title: 'Neon Sidewalk',
-    artist: 'Paper Hearts',
-    durationLabel: '2:57',
-    previewUrl: 'https://p.scdn.co/mp3-preview/example-neon'
-  },
-  {
-    id: 'track-film',
-    title: 'Film Roll Summer',
-    artist: 'Soda Arcade',
-    durationLabel: '4:02',
-    previewUrl: null
-  },
-  {
-    id: 'track-confetti',
-    title: 'Confetti Static',
-    artist: 'Weekend Receiver',
-    durationLabel: '3:41',
-    previewUrl: 'https://p.scdn.co/mp3-preview/example-confetti'
-  }
-];
-
 export function getStripLayoutById(layoutId) {
   return STRIP_LAYOUTS.find((layout) => layout.id === layoutId) || STRIP_LAYOUTS[0];
 }
-

@@ -531,6 +531,133 @@ button.sketch-card {
   accent-color: var(--coral);
 }
 
+.spotify-search-form {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.spotify-search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.spotify-search-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.spotify-connection-card,
+.selected-track-summary,
+.spotify-empty-state {
+  padding: 1rem;
+}
+
+.spotify-connection-card,
+.selected-track-summary {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.spotify-connection-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: flex-start;
+}
+
+.spotify-connection-card__header h3 {
+  margin: 0.1rem 0 0;
+  font-size: 1.15rem;
+  line-height: 1.1;
+  font-family: var(--font-display);
+}
+
+.spotify-track-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.spotify-track-card {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr) auto;
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.95rem;
+  text-align: left;
+}
+
+.spotify-track-card__artwork,
+.selected-track-summary__artwork {
+  width: 100%;
+  border: 2px solid rgba(45, 36, 30, 0.28);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  object-fit: cover;
+  box-shadow: 0 6px 14px rgba(45, 36, 30, 0.08);
+}
+
+.spotify-track-card__artwork {
+  aspect-ratio: 1;
+}
+
+.spotify-track-card__copy,
+.spotify-track-card__headline {
+  display: grid;
+  gap: 0.22rem;
+}
+
+.spotify-track-card__headline strong,
+.selected-track-summary__copy strong {
+  font-size: 1.02rem;
+}
+
+.spotify-track-card__headline span,
+.spotify-track-card__meta,
+.selected-track-summary__copy span {
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.spotify-track-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.88rem;
+}
+
+.spotify-track-card.is-selected {
+  border-color: var(--coral);
+}
+
+.selected-track-summary {
+  grid-template-columns: 80px minmax(0, 1fr);
+  align-items: center;
+}
+
+.selected-track-summary__artwork {
+  aspect-ratio: 1;
+}
+
+.selected-track-summary__copy {
+  display: grid;
+  gap: 0.24rem;
+}
+
+.spotify-empty-state {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.spotify-error-text {
+  margin: 0;
+  color: #a23e2b;
+  font-weight: 700;
+}
+
 .option-button,
 .layout-card,
 .shot-card--selectable {
@@ -825,6 +952,15 @@ button.sketch-card {
   .workflow-nav {
     grid-template-columns: 1fr;
   }
+
+  .spotify-track-card {
+    grid-template-columns: 70px minmax(0, 1fr);
+  }
+
+  .spotify-track-card .status-chip {
+    grid-column: 1 / -1;
+    justify-self: flex-start;
+  }
 }
 
 @media (max-width: 640px) {
@@ -845,6 +981,11 @@ button.sketch-card {
 
   .snapshot-grid,
   .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .spotify-search-row,
+  .selected-track-summary {
     grid-template-columns: 1fr;
   }
 

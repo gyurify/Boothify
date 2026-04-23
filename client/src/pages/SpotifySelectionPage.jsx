@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import SpotifyTrackList from '../components/spotify/SpotifyTrackList.jsx';
 import PageIntro from '../components/PageIntro.jsx';
 import SessionSnapshot from '../components/SessionSnapshot.jsx';
 import SketchButton from '../components/ui/SketchButton.jsx';
@@ -14,12 +15,24 @@ export default function SpotifySelectionPage() {
   const {
     appLimits,
     availableTracks,
+    loadSpotifyConfiguration,
+    searchSpotifyTracks,
     selectedTrack,
-    session,
     selectTrack,
+    session,
     setSongClipLength,
-    setSpotifyQuery
+    setSpotifyQuery,
+    spotify
   } = useBoothify();
+
+  useEffect(() => {
+    void loadSpotifyConfiguration();
+  }, [loadSpotifyConfiguration]);
+
+  function handleSearchSubmit(event) {
+    event.preventDefault();
+    void searchSpotifyTracks(spotify.query);
+  }
 
   return (
     <div className="page-stack">
@@ -28,7 +41,7 @@ export default function SpotifySelectionPage() {
           <PageIntro
             eyebrow="Step 1"
             title="Spotify selection"
-            description="Start with the song that sets the mood for the session."
+            description="Search Spotify metadata, pick a track, and set the clip length for the export phase."
           />
 
           <div className="action-row action-row--compact">
@@ -37,44 +50,39 @@ export default function SpotifySelectionPage() {
             </SketchButton>
           </div>
 
-          <label className="form-field">
-            <span>Search tracks</span>
-            <input
-              placeholder="Search sample metadata"
-              type="text"
-              value={session.spotifyQuery}
-              onChange={(event) => setSpotifyQuery(event.target.value)}
-            />
-          </label>
+          <SketchCard className="spotify-connection-card" tone={spotify.auth.useMockData ? 'gold' : 'mint'}>
+            <div className="spotify-connection-card__header">
+              <div>
+                <p className="eyebrow">Backend mode</p>
+                <h3>{spotify.auth.useMockData ? 'Mock fallback active' : 'Spotify search active'}</h3>
+              </div>
+              <span className="status-chip">
+                {spotify.auth.useMockData ? 'Mock data' : spotify.auth.mode}
+              </span>
+            </div>
+            <p>{spotify.auth.note}</p>
+          </SketchCard>
 
-          <div className="option-list">
-            {availableTracks.length === 0 ? (
-              <p className="helper-text">No sample tracks match that search yet.</p>
-            ) : (
-              availableTracks.map((track) => {
-                const isSelected = selectedTrack?.id === track.id;
-
-                return (
-                  <button
-                    key={track.id}
-                    className={`option-button ${isSelected ? 'is-selected' : ''}`.trim()}
-                    type="button"
-                    onClick={() => selectTrack(track.id)}
-                  >
-                    <div className="option-copy">
-                      <strong>{track.title}</strong>
-                      <span>
-                        {track.artist} - {track.durationLabel}
-                      </span>
-                    </div>
-                    <span className="status-chip">
-                      {track.previewUrl ? 'Preview clip' : 'Metadata only'}
-                    </span>
-                  </button>
-                );
-              })
-            )}
-          </div>
+          <form className="spotify-search-form" onSubmit={handleSearchSubmit}>
+            <label className="form-field">
+              <span>Search tracks</span>
+              <div className="spotify-search-row">
+                <input
+                  placeholder="Search by title or artist"
+                  type="search"
+                  value={spotify.query}
+                  onChange={(event) => setSpotifyQuery(event.target.value)}
+                />
+                <SketchButton
+                  disabled={spotify.status === 'loading' || !spotify.query.trim()}
+                  type="submit"
+                  variant="primary"
+                >
+                  {spotify.status === 'loading' ? 'Searching...' : 'Search'}
+                </SketchButton>
+              </div>
+            </label>
+          </form>
 
           <label className="form-field">
             <span>Clip length</span>
@@ -91,10 +99,51 @@ export default function SpotifySelectionPage() {
             </div>
           </label>
 
-          <p className="helper-text">
-            Full-song export is limited by Spotify rules, so Boothify is prepared for preview audio
-            or another approved fallback source.
-          </p>
+          <div className="spotify-search-summary">
+            <span className="pill">{spotify.source === 'mock' ? 'Mock source' : 'Spotify source'}</span>
+            {spotify.hasSearched ? (
+              <span className="pill pill--paper">{availableTracks.length} results</span>
+            ) : null}
+          </div>
+
+          <p className="helper-text">{spotify.note}</p>
+
+          {spotify.error ? <p className="spotify-error-text">{spotify.error}</p> : null}
+
+          {selectedTrack ? (
+            <SketchCard className="selected-track-summary" tone="blush">
+              <img
+                alt={`${selectedTrack.title} artwork`}
+                className="selected-track-summary__artwork"
+                src={selectedTrack.artworkUrl}
+              />
+              <div className="selected-track-summary__copy">
+                <p className="eyebrow">Selected soundtrack</p>
+                <strong>{selectedTrack.title}</strong>
+                <span>
+                  {selectedTrack.artist} - {selectedTrack.durationLabel}
+                </span>
+              </div>
+            </SketchCard>
+          ) : null}
+
+          {!spotify.hasSearched ? (
+            <SketchCard className="spotify-empty-state" tone="paper">
+              <strong>Start with a search.</strong>
+              <p>Type a song title or artist to fetch results from Spotify or the mock fallback.</p>
+            </SketchCard>
+          ) : availableTracks.length === 0 ? (
+            <SketchCard className="spotify-empty-state" tone="paper">
+              <strong>No tracks found.</strong>
+              <p>Try a broader song title, artist name, or shorter keyword.</p>
+            </SketchCard>
+          ) : (
+            <SpotifyTrackList
+              selectedTrackId={selectedTrack?.id || null}
+              tracks={availableTracks}
+              onSelectTrack={selectTrack}
+            />
+          )}
         </SketchCard>
 
         <SessionSnapshot />
@@ -133,7 +182,7 @@ export default function SpotifySelectionPage() {
           <ul className="modal-list">
             <li>Track search belongs to the Spotify metadata layer.</li>
             <li>Export audio belongs to a separate preview-or-fallback layer.</li>
-            <li>This keeps the product legally cleaner and technically maintainable.</li>
+            <li>Swap mock mode for real credentials in the backend env file when ready.</li>
           </ul>
         </div>
       </SketchModal>
