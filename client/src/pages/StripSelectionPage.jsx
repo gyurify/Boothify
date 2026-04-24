@@ -1,4 +1,6 @@
 import { useNavigate } from 'react-router-dom';
+import PhotoboothStripPreview from '../components/PhotoboothStripPreview.jsx';
+import StripLayoutGallery from '../components/StripLayoutGallery.jsx';
 import { APP_ROUTES } from '../context/boothifyConfig.js';
 import { useBoothify } from '../context/BoothifyContext.jsx';
 
@@ -52,28 +54,14 @@ export default function StripSelectionPage() {
                 </button>
 
                 <div className="layout-selector__preview">
-                  <div
-                    className={`layout-selector__strip ${
-                      selectedLayout.columns > 1 ? 'layout-selector__strip--grid' : ''
-                    }`.trim()}
-                    style={{
-                      gridTemplateColumns: `repeat(${selectedLayout.columns}, 1fr)`,
-                      gridTemplateRows: `repeat(${selectedLayout.rows}, 1fr)`
-                    }}
-                  >
-                    {Array.from({ length: selectedLayout.photoCount }).map((_, index) => (
-                      <span
-                        key={`${selectedLayout.id}-preview-${index + 1}`}
-                        className="layout-selector__cell"
-                      />
-                    ))}
-                  </div>
+                  <PhotoboothStripPreview layout={selectedLayout} variant="screen" />
 
                   <div className="layout-selector__copy">
                     <strong>{selectedLayout.label}</strong>
                     <span>
                       {selectedLayout.stripSizeLabel} strip - {selectedLayout.photoCount} photos
                     </span>
+                    <span>{selectedLayout.photoSizeLabel} each</span>
                   </div>
                 </div>
 
@@ -130,26 +118,17 @@ export default function StripSelectionPage() {
         </div>
       </section>
 
-      <div className="layout-ticket-row">
-        {availableLayouts.map((layout) => {
-          const isSelected = layout.id === selectedLayout.id;
+      <section className="strip-gallery-section">
+        <div className="strip-gallery-section__copy">
+          <p className="eyebrow">All strip options</p>
+          <h3>Preview every layout before you lock one in.</h3>
+          <p>
+            Each card shows the strip dimensions, photo count, and a photobooth-style paper preview.
+          </p>
+        </div>
 
-          return (
-            <button
-              key={layout.id}
-              aria-pressed={isSelected}
-              className={`layout-ticket ${isSelected ? 'is-selected' : ''}`.trim()}
-              onClick={() => selectLayout(layout.id)}
-              type="button"
-            >
-              <strong>{layout.label}</strong>
-              <span>
-                {layout.photoCount} photos - {layout.stripSizeLabel}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+        <StripLayoutGallery />
+      </section>
     </div>
   );
 }
