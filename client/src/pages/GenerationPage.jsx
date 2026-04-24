@@ -15,7 +15,7 @@ export default function GenerationPage() {
     selectedLayout,
     selectedStripShots,
     selectedTrack,
-    session
+    songClip
   } = useBoothify();
 
   return (
@@ -44,8 +44,8 @@ export default function GenerationPage() {
                   <strong>{selectedLayout.label}</strong>
                 </div>
                 <div className="summary-block">
-                  <span>Clip length</span>
-                  <strong>{session.clipLengthSeconds}s</strong>
+                  <span>Clip window</span>
+                  <strong>{songClip.timingLabel}</strong>
                 </div>
                 <div className="summary-block">
                   <span>Frames in strip</span>
@@ -99,6 +99,7 @@ export default function GenerationPage() {
                 <div className="preview-panel">
                   <strong>{generation.previewAsset.label}</strong>
                   <p>{generation.previewAsset.soundtrackLabel}</p>
+                  <p>{generation.previewAsset.clipWindowLabel}</p>
                   <p>{generation.previewAsset.note}</p>
                 </div>
               ) : (
@@ -123,7 +124,7 @@ export default function GenerationPage() {
           variant="primary"
           onClick={() => navigate(APP_ROUTES.download)}
         >
-          Continue to downloads
+          Continue to song clip picker
         </SketchButton>
       </div>
     </div>

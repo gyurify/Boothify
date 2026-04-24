@@ -1,6 +1,14 @@
 import { createContext, useCallback, useContext, useMemo, useReducer } from 'react';
 import { fetchSpotifyClientConfig, searchSpotifyTracks as requestSpotifyTracks } from '../services/spotifyApi.js';
 import {
+  createDefaultSongClip,
+  getSongClipSelection,
+  setSongClipEnd as buildSongClipEnd,
+  setSongClipLength as buildSongClipLength,
+  setSongClipStart as buildSongClipStart,
+  setSongClipTiming as buildSongClipTiming
+} from '../utils/songClip.js';
+import {
   APP_LIMITS,
   APP_ROUTES,
   DEFAULT_SPOTIFY_RESULTS_LIMIT,
@@ -50,9 +58,9 @@ function createInitialSpotifyState() {
 function createInitialSessionState() {
   return {
     capturedShots: [],
-    clipLengthSeconds: APP_LIMITS.defaultClipSeconds,
     generation: createInitialGenerationState(),
     selectedLayoutId: STRIP_LAYOUTS[0].id,
+    songClip: createDefaultSongClip(null, APP_LIMITS),
     selectedStripPhotoIds: [],
     selectedTrack: null,
     sessionId: `boothify-${Date.now()}`,
@@ -74,6 +82,25 @@ function createSearchErrorMessage(error) {
     error?.message ||
     'Unable to search Spotify tracks right now.'
   );
+}
+
+function syncGenerationWithSongClip(generation, rawSongClip, selectedTrack) {
+  if (generation.status !== 'ready' || !generation.previewAsset) {
+    return generation;
+  }
+
+  const songClip = getSongClipSelection(rawSongClip, selectedTrack, APP_LIMITS);
+
+  return {
+    ...generation,
+    previewAsset: {
+      ...generation.previewAsset,
+      clipEndSeconds: songClip.endSeconds,
+      clipLengthSeconds: songClip.lengthSeconds,
+      clipStartSeconds: songClip.startSeconds,
+      clipWindowLabel: songClip.timingLabel
+    }
+  };
 }
 
 function boothifyReducer(state, action) {
@@ -143,9 +170,21 @@ function boothifyReducer(state, action) {
       const refreshedSelectedTrack = state.selectedTrack
         ? action.payload.items.find((track) => track.id === state.selectedTrack.id) || state.selectedTrack
         : null;
+      const nextSongClip = refreshedSelectedTrack
+        ? getSongClipSelection(state.songClip, refreshedSelectedTrack, APP_LIMITS)
+        : state.songClip;
 
       return {
         ...state,
+        generation: refreshedSelectedTrack
+          ? syncGenerationWithSongClip(state.generation, nextSongClip, refreshedSelectedTrack)
+          : state.generation,
+        songClip: refreshedSelectedTrack
+          ? {
+              endSeconds: nextSongClip.endSeconds,
+              startSeconds: nextSongClip.startSeconds
+            }
+          : state.songClip,
         selectedTrack: refreshedSelectedTrack,
         spotify: {
           ...state.spotify,
@@ -179,17 +218,69 @@ function boothifyReducer(state, action) {
     case 'SELECT_TRACK':
       return resetGeneration({
         ...state,
+        songClip: createDefaultSongClip(action.payload, APP_LIMITS),
         selectedTrack: action.payload
       });
 
-    case 'SET_CLIP_LENGTH':
-      return resetGeneration({
+    case 'SET_SONG_CLIP_TIMING': {
+      const nextSongClip = buildSongClipTiming(
+        state.songClip,
+        state.selectedTrack,
+        APP_LIMITS,
+        action.payload
+      );
+
+      return {
         ...state,
-        clipLengthSeconds: Math.min(
-          APP_LIMITS.maxClipSeconds,
-          Math.max(APP_LIMITS.minClipSeconds, action.payload)
-        )
-      });
+        generation: syncGenerationWithSongClip(state.generation, nextSongClip, state.selectedTrack),
+        songClip: nextSongClip
+      };
+    }
+
+    case 'SET_SONG_CLIP_LENGTH': {
+      const nextSongClip = buildSongClipLength(
+        state.songClip,
+        state.selectedTrack,
+        APP_LIMITS,
+        action.payload
+      );
+
+      return {
+        ...state,
+        generation: syncGenerationWithSongClip(state.generation, nextSongClip, state.selectedTrack),
+        songClip: nextSongClip
+      };
+    }
+
+    case 'SET_SONG_CLIP_START': {
+      const nextSongClip = buildSongClipStart(
+        state.songClip,
+        state.selectedTrack,
+        APP_LIMITS,
+        action.payload
+      );
+
+      return {
+        ...state,
+        generation: syncGenerationWithSongClip(state.generation, nextSongClip, state.selectedTrack),
+        songClip: nextSongClip
+      };
+    }
+
+    case 'SET_SONG_CLIP_END': {
+      const nextSongClip = buildSongClipEnd(
+        state.songClip,
+        state.selectedTrack,
+        APP_LIMITS,
+        action.payload
+      );
+
+      return {
+        ...state,
+        generation: syncGenerationWithSongClip(state.generation, nextSongClip, state.selectedTrack),
+        songClip: nextSongClip
+      };
+    }
 
     case 'SELECT_LAYOUT': {
       const nextLayout = getStripLayoutById(action.payload);
@@ -277,6 +368,7 @@ function boothifyReducer(state, action) {
 
     case 'GENERATE_PREVIEW_PLACEHOLDER': {
       const selectedLayout = getStripLayoutById(state.selectedLayoutId);
+      const songClip = getSongClipSelection(state.songClip, state.selectedTrack, APP_LIMITS);
 
       if (state.selectedStripPhotoIds.length !== selectedLayout.photoCount) {
         return state;
@@ -290,7 +382,10 @@ function boothifyReducer(state, action) {
           status: 'ready',
           previewType: 'gif',
           previewAsset: {
-            clipLengthSeconds: state.clipLengthSeconds,
+            clipEndSeconds: songClip.endSeconds,
+            clipLengthSeconds: songClip.lengthSeconds,
+            clipStartSeconds: songClip.startSeconds,
+            clipWindowLabel: songClip.timingLabel,
             id: `preview-${assetStem}`,
             label: `${selectedLayout.label} preview`,
             note: state.selectedTrack?.previewUrl
@@ -380,8 +475,20 @@ export function BoothifyProvider({ children }) {
     dispatch({ type: 'SELECT_TRACK', payload: track });
   }, []);
 
+  const setSongClipTiming = useCallback((seconds) => {
+    dispatch({ type: 'SET_SONG_CLIP_TIMING', payload: Number(seconds) });
+  }, []);
+
   const setSongClipLength = useCallback((seconds) => {
-    dispatch({ type: 'SET_CLIP_LENGTH', payload: Number(seconds) });
+    dispatch({ type: 'SET_SONG_CLIP_LENGTH', payload: Number(seconds) });
+  }, []);
+
+  const setSongClipStart = useCallback((seconds) => {
+    dispatch({ type: 'SET_SONG_CLIP_START', payload: Number(seconds) });
+  }, []);
+
+  const setSongClipEnd = useCallback((seconds) => {
+    dispatch({ type: 'SET_SONG_CLIP_END', payload: Number(seconds) });
   }, []);
 
   const selectLayout = useCallback((layoutId) => {
@@ -419,14 +526,24 @@ export function BoothifyProvider({ children }) {
   const value = useMemo(() => {
     const selectedTrack = session.selectedTrack;
     const selectedLayout = getStripLayoutById(session.selectedLayoutId);
+    const songClip = getSongClipSelection(session.songClip, selectedTrack, APP_LIMITS);
     const selectedStripShots = session.selectedStripPhotoIds
       .map((shotId) => session.capturedShots.find((shot) => shot.id === shotId))
       .filter(Boolean);
+    const clipValidation = {
+      isValid: songClip.isValid,
+      note:
+        songClip.rawTrackDurationSeconds > 0 &&
+        songClip.rawTrackDurationSeconds < APP_LIMITS.defaultClipSeconds
+          ? 'This track is shorter than 15 seconds, so the full track is selected.'
+          : `Clip length must stay between ${songClip.minLengthSeconds}s and ${songClip.maxLengthSeconds}s.`
+    };
 
     const progress = {
       hasEnoughShotsForLayout: session.capturedShots.length >= selectedLayout.photoCount,
       hasExactStripSelection: session.selectedStripPhotoIds.length === selectedLayout.photoCount,
       hasGeneratedPreview: session.generation.status === 'ready',
+      hasSavedSongClip: Boolean(selectedTrack) && clipValidation.isValid,
       hasSelectedTrack: Boolean(selectedTrack)
     };
 
@@ -464,7 +581,7 @@ export function BoothifyProvider({ children }) {
     const workflow = WORKFLOW_STEPS.map((step) => {
       const completenessMap = {
         camera: progress.hasEnoughShotsForLayout,
-        download: progress.hasGeneratedPreview,
+        download: progress.hasGeneratedPreview && progress.hasSavedSongClip,
         generation: progress.hasGeneratedPreview,
         landing: true,
         review: progress.hasExactStripSelection,
@@ -494,6 +611,7 @@ export function BoothifyProvider({ children }) {
       appLimits: APP_LIMITS,
       availableLayouts: STRIP_LAYOUTS,
       availableTracks: session.spotify.items,
+      clipValidation,
       clearCapturedShots,
       clearStripSelection,
       generatePreviewPlaceholder,
@@ -506,10 +624,14 @@ export function BoothifyProvider({ children }) {
       searchSpotifyTracks,
       selectLayout,
       selectedLayout,
+      songClip,
       selectedStripShots,
       selectedTrack,
       selectTrack,
       session,
+      setSongClipEnd,
+      setSongClipStart,
+      setSongClipTiming,
       setSongClipLength,
       setSpotifyQuery,
       spotify: session.spotify,
@@ -528,6 +650,9 @@ export function BoothifyProvider({ children }) {
     selectLayout,
     selectTrack,
     session,
+    setSongClipEnd,
+    setSongClipStart,
+    setSongClipTiming,
     setSongClipLength,
     setSpotifyQuery,
     toggleStripPhoto

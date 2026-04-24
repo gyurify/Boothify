@@ -13,14 +13,11 @@ export default function SpotifySelectionPage() {
   const navigate = useNavigate();
   const [isRulesOpen, setRulesOpen] = useState(false);
   const {
-    appLimits,
     availableTracks,
     loadSpotifyConfiguration,
     searchSpotifyTracks,
     selectedTrack,
     selectTrack,
-    session,
-    setSongClipLength,
     setSpotifyQuery,
     spotify
   } = useBoothify();
@@ -41,7 +38,7 @@ export default function SpotifySelectionPage() {
           <PageIntro
             eyebrow="Step 1"
             title="Spotify selection"
-            description="Search Spotify metadata, pick a track, and set the clip length for the export phase."
+            description="Search Spotify metadata, pick a track, and send it forward to the later song clip picker."
           />
 
           <div className="action-row action-row--compact">
@@ -84,21 +81,6 @@ export default function SpotifySelectionPage() {
             </label>
           </form>
 
-          <label className="form-field">
-            <span>Clip length</span>
-            <div className="range-row">
-              <input
-                max={appLimits.maxClipSeconds}
-                min={appLimits.minClipSeconds}
-                step="1"
-                type="range"
-                value={session.clipLengthSeconds}
-                onChange={(event) => setSongClipLength(event.target.value)}
-              />
-              <strong>{session.clipLengthSeconds}s</strong>
-            </div>
-          </label>
-
           <div className="spotify-search-summary">
             <span className="pill">{spotify.source === 'mock' ? 'Mock source' : 'Spotify source'}</span>
             {spotify.hasSearched ? (
@@ -123,6 +105,7 @@ export default function SpotifySelectionPage() {
                 <span>
                   {selectedTrack.artist} - {selectedTrack.durationLabel}
                 </span>
+                <span>Clip timing defaults to 15 seconds and can be trimmed in Step 6.</span>
               </div>
             </SketchCard>
           ) : null}

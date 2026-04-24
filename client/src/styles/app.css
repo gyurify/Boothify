@@ -1573,6 +1573,194 @@ button.sketch-card {
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
 }
 
+.clip-picker-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.clip-track-card {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: center;
+  padding: 1rem;
+  border: 3px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.clip-track-card__artwork {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border: 2px solid rgba(17, 17, 17, 0.28);
+  border-radius: 14px;
+}
+
+.clip-track-card__artwork--placeholder {
+  background:
+    linear-gradient(135deg, rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.18)),
+    var(--paper-soft);
+}
+
+.clip-track-card__copy {
+  display: grid;
+  gap: 0.24rem;
+}
+
+.clip-track-card__copy strong,
+.clip-metric-card strong,
+.clip-control__meta strong,
+.clip-validation-card strong {
+  font-size: 1.02rem;
+}
+
+.clip-track-card__copy span {
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+
+.clip-timeline-panel,
+.clip-validation-card {
+  display: grid;
+  gap: 0.9rem;
+  padding: 1rem;
+  border: 3px solid var(--line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.clip-timeline {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.clip-timeline__waveform {
+  position: relative;
+  min-height: 11rem;
+  display: flex;
+  align-items: end;
+  gap: 0.22rem;
+  padding: 1rem 0.8rem;
+  border: 3px solid var(--line);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.94) 0%, rgba(239, 242, 247, 0.92) 100%);
+  overflow: hidden;
+}
+
+.clip-timeline__bar {
+  flex: 1 1 0;
+  min-width: 0;
+  border-radius: 999px 999px 0 0;
+  background: rgba(17, 17, 17, 0.18);
+}
+
+.clip-timeline__selection {
+  position: absolute;
+  inset: 0 auto 0 0;
+  min-width: 1.2rem;
+  border-left: 3px solid var(--line);
+  border-right: 3px solid var(--line);
+  background: rgba(131, 184, 255, 0.18);
+}
+
+.clip-timeline__selection::before {
+  content: '';
+  position: absolute;
+  inset: 0.65rem 0.25rem;
+  border: 2px dashed rgba(17, 17, 17, 0.4);
+  border-radius: 12px;
+}
+
+.clip-timeline__handle {
+  position: absolute;
+  top: 50%;
+  width: 0.95rem;
+  height: 3.1rem;
+  border: 3px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-50%);
+}
+
+.clip-timeline__handle--start {
+  left: -0.55rem;
+}
+
+.clip-timeline__handle--end {
+  right: -0.55rem;
+}
+
+.clip-timeline__labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+}
+
+.clip-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.clip-metric-card,
+.clip-control {
+  display: grid;
+  gap: 0.42rem;
+  padding: 0.85rem;
+  border: 2.5px solid rgba(17, 17, 17, 0.92);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.clip-metric-card span,
+.clip-control > span {
+  color: var(--paper-ink);
+}
+
+.clip-control-stack,
+.clip-control-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.clip-control-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.clip-control input[type='range'] {
+  width: 100%;
+  accent-color: #7b8fb2;
+}
+
+.clip-control__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.8rem;
+  align-items: baseline;
+}
+
+.clip-control__meta span {
+  color: var(--ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  text-align: right;
+}
+
+.clip-validation-card.is-valid {
+  background:
+    linear-gradient(180deg, rgba(238, 246, 243, 0.94) 0%, rgba(255, 255, 255, 0.92) 100%);
+}
+
+.clip-validation-card p {
+  margin: 0;
+  color: var(--ink-soft);
+  line-height: 1.52;
+}
+
 @media (max-width: 1024px) {
   .page-grid--two {
     grid-template-columns: 1fr;
@@ -1584,6 +1772,10 @@ button.sketch-card {
 
   .generation-studio__grid {
     grid-template-columns: 1fr;
+  }
+
+  .clip-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -1635,6 +1827,10 @@ button.sketch-card {
 
   .instruction-board {
     width: min(100%, 42rem);
+  }
+
+  .clip-control-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1711,6 +1907,11 @@ button.sketch-card {
     grid-template-columns: 1fr;
   }
 
+  .clip-track-card,
+  .clip-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
   .spotify-search-row,
   .selected-track-summary {
     grid-template-columns: 1fr;
@@ -1740,7 +1941,9 @@ button.sketch-card {
   .page-card,
   .session-snapshot,
   .sketch-modal,
-  .generation-preview-sheet {
+  .generation-preview-sheet,
+  .clip-timeline-panel,
+  .clip-validation-card {
     padding: 1rem;
   }
 

@@ -3,7 +3,7 @@ import ProgressMeter from './ui/ProgressMeter.jsx';
 import SketchCard from './ui/SketchCard.jsx';
 
 export default function SessionSnapshot() {
-  const { appLimits, progress, selectedLayout, selectedStripShots, selectedTrack, session } =
+  const { appLimits, progress, selectedLayout, selectedStripShots, selectedTrack, session, songClip } =
     useBoothify();
 
   return (
@@ -17,8 +17,8 @@ export default function SessionSnapshot() {
           </strong>
         </div>
         <div>
-          <span>Clip length</span>
-          <strong>{session.clipLengthSeconds}s</strong>
+          <span>Song clip</span>
+          <strong>{songClip.timingLabel}</strong>
         </div>
         <div>
           <span>Layout</span>

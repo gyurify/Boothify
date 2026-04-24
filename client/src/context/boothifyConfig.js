@@ -62,10 +62,10 @@ export const WORKFLOW_STEPS = [
   },
   {
     id: 'download',
-    label: 'Download',
-    title: 'Deliver assets',
+    label: 'Clip',
+    title: 'Trim song clip',
     path: APP_ROUTES.download,
-    description: 'Offer the motion export, strip-only export, or both.'
+    description: 'Choose the exact start, end, and timing for the soundtrack segment.'
   }
 ];
 
