@@ -1,29 +1,29 @@
 :root {
   color-scheme: light;
-  --paper: #f6efe2;
-  --paper-strong: #fff9f0;
-  --paper-soft: #f0e6d5;
-  --paper-ink: #5b4b3e;
-  --ink: #211b16;
-  --ink-soft: #6b5b4e;
-  --line: #2d241e;
-  --teal: #59c7b1;
-  --teal-soft: #d7f4ee;
-  --pink: #ff94ba;
-  --pink-soft: #ffe3ee;
-  --gold: #f1c768;
-  --gold-soft: #fff1c9;
-  --sky: #83b8ff;
-  --sky-soft: #e2efff;
-  --coral: #ff8a63;
-  --mint-glow: rgba(89, 199, 177, 0.18);
-  --shadow-soft: 0 18px 38px rgba(54, 38, 26, 0.12);
-  --shadow-sketch: 0 8px 0 rgba(45, 36, 30, 0.12);
-  --page-width: min(1120px, calc(100% - 2rem));
-  --radius-card: 8px;
-  --radius-field: 8px;
-  --font-body: Inter, "Segoe UI", Arial, sans-serif;
-  --font-display: "Avenir Next", "Trebuchet MS", "Segoe UI", sans-serif;
+  --paper: #f4f2eb;
+  --paper-strong: #fffdf8;
+  --paper-soft: #ece8de;
+  --paper-ink: #666055;
+  --ink: #121212;
+  --ink-soft: #5f5f5a;
+  --line: #111111;
+  --teal: #bfdad2;
+  --teal-soft: #eef6f3;
+  --pink: #ead8de;
+  --pink-soft: #f8eef1;
+  --gold: #e9dfbb;
+  --gold-soft: #f8f3df;
+  --sky: #d9e2ef;
+  --sky-soft: #eef2f7;
+  --coral: #ff7272;
+  --mint-glow: rgba(188, 216, 208, 0.28);
+  --shadow-soft: 0 18px 40px rgba(18, 18, 18, 0.08);
+  --shadow-sketch: 0 8px 0 rgba(17, 17, 17, 0.08);
+  --page-width: min(1220px, calc(100% - 2rem));
+  --radius-card: 24px;
+  --radius-field: 16px;
+  --font-body: "Avenir Next", "Segoe UI", sans-serif;
+  --font-display: "Century Gothic", "Avenir Next", "Trebuchet MS", sans-serif;
   --font-scribble: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
 }
 
@@ -43,10 +43,10 @@ body {
   color: var(--ink);
   font-family: var(--font-body);
   background:
-    radial-gradient(circle at 12% 12%, rgba(241, 199, 104, 0.32), transparent 20%),
-    radial-gradient(circle at 86% 14%, rgba(131, 184, 255, 0.24), transparent 18%),
-    radial-gradient(circle at 84% 84%, rgba(255, 148, 186, 0.18), transparent 22%),
-    linear-gradient(180deg, #fffaf2 0%, var(--paper) 100%);
+    radial-gradient(circle at 10% 12%, rgba(0, 0, 0, 0.035), transparent 18%),
+    radial-gradient(circle at 88% 18%, rgba(0, 0, 0, 0.03), transparent 20%),
+    linear-gradient(180deg, #fefdf9 0%, var(--paper) 100%);
+  overflow-x: hidden;
 }
 
 body::before,
@@ -58,31 +58,31 @@ body::after {
 }
 
 body::before {
-  opacity: 0.1;
+  opacity: 0.08;
   background:
     repeating-linear-gradient(
       0deg,
-      rgba(33, 27, 22, 0.12) 0,
-      rgba(33, 27, 22, 0.12) 1px,
+      rgba(18, 18, 18, 0.14) 0,
+      rgba(18, 18, 18, 0.14) 1px,
       transparent 1px,
-      transparent 18px
+      transparent 24px
     ),
     repeating-linear-gradient(
       90deg,
-      rgba(33, 27, 22, 0.07) 0,
-      rgba(33, 27, 22, 0.07) 1px,
+      rgba(18, 18, 18, 0.06) 0,
+      rgba(18, 18, 18, 0.06) 1px,
       transparent 1px,
-      transparent 24px
+      transparent 28px
     );
   mix-blend-mode: multiply;
-  animation: paperDrift 32s linear infinite alternate;
+  animation: paperDrift 36s linear infinite alternate;
 }
 
 body::after {
-  opacity: 0.45;
   background:
-    linear-gradient(140deg, rgba(255, 255, 255, 0.55), transparent 30%),
-    linear-gradient(320deg, rgba(255, 255, 255, 0.18), transparent 35%);
+    radial-gradient(circle at center, transparent 55%, rgba(0, 0, 0, 0.035) 100%),
+    linear-gradient(160deg, rgba(255, 255, 255, 0.65), transparent 34%);
+  opacity: 0.85;
 }
 
 a {
@@ -112,29 +112,7 @@ img {
   }
 
   100% {
-    transform: translate3d(12px, -10px, 0);
-  }
-}
-
-@keyframes badgeFloat {
-  0%,
-  100% {
-    transform: rotate(-5deg) translateY(0);
-  }
-
-  50% {
-    transform: rotate(-3deg) translateY(-4px);
-  }
-}
-
-@keyframes panelGlow {
-  0%,
-  100% {
-    box-shadow: var(--shadow-soft), var(--shadow-sketch);
-  }
-
-  50% {
-    box-shadow: 0 22px 44px rgba(54, 38, 26, 0.14), 0 8px 0 rgba(45, 36, 30, 0.14);
+    transform: translate3d(10px, -8px, 0);
   }
 }
 

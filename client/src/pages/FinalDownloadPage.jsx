@@ -15,11 +15,11 @@ export default function FinalDownloadPage() {
   return (
     <div className="page-stack">
       <section className="page-grid page-grid--two">
-        <SketchCard className="page-card" tone="gold">
+        <SketchCard className="page-card download-counter" tone="paper">
           <PageIntro
             eyebrow="Step 6"
-            title="Final download screen"
-            description="Choose how you want to take the session home: motion, strip-only, or the full bundle."
+            title="Pick up the finished booth assets."
+            description="Choose the export you want to carry out of the session: motion, strip-only, or the whole bundle."
           />
 
           <div className="download-grid">
@@ -27,11 +27,12 @@ export default function FinalDownloadPage() {
               const asset = generation.downloads[key];
 
               return (
-                <SketchCard as="article" key={key} className="download-card" tone="paper">
+                <SketchCard as="article" key={key} className="download-card download-card--ticket" tone="paper">
+                  <span className="download-card__tag">{key}</span>
                   <strong>{asset?.label || 'Pending asset'}</strong>
                   <p>{asset?.filename || 'Generated filename will appear here.'}</p>
                   <SketchButton disabled type="button" variant="ghost">
-                    Download wiring later
+                    download wiring later
                   </SketchButton>
                 </SketchCard>
               );

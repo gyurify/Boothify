@@ -10,19 +10,14 @@ export default function AppShell({ children }) {
   return (
     <div className="app-shell">
       <div className="paper-halo" aria-hidden="true" />
-      <header className="topbar">
-        <Link className="brand-mark" to="/">
-          <span className="brand-badge">B</span>
-          <div className="brand-copy">
-            <p className="eyebrow">Sketchy photo booth + music lab</p>
-            <h1>Boothify</h1>
-            <p className="brand-note">Playful sessions, polished exports, and a little doodled swagger.</p>
-          </div>
+      <header className="utility-bar">
+        <Link className="utility-home" to="/">
+          <span className="utility-home__title">Boothify</span>
+          <span className="utility-home__note">hand-drawn photo booth flow</span>
         </Link>
 
-        <div className="topbar-note">
-          <span className="pill pill--mint">Session flow</span>
-          <span className="pill pill--paper">React + Vite</span>
+        <div className="utility-actions">
+          <span className="utility-chip">sketch kiosk</span>
           <SketchButton
             onClick={() => {
               resetSession();
@@ -32,19 +27,19 @@ export default function AppShell({ children }) {
             type="button"
             variant="ghost"
           >
-            Reset
+            reset session
           </SketchButton>
         </div>
       </header>
 
-      <div className="page-frame">
+      <div className="page-frame page-frame--workflow">
         <SessionProgress />
       </div>
 
       <main className="page-frame">{children}</main>
 
       <footer className="site-footer">
-        <p>Built for song-led photo sessions, sketched with a little extra charm.</p>
+        <p>built for quick strips, music cues, and a booth flow that still feels handmade.</p>
       </footer>
     </div>
   );
